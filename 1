@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <title>賽車遊戲 - 布思考斯星版</title>
+  <style>
+    body {
+      margin: 0;
+      background: #111;
+      overflow: hidden;
+      font-family: monospace;
+      color: #0f0;
+    }
+    canvas {
+      display: block;
+      margin: auto;
+      background: #222;
+      border: 3px solid #0f0;
+    }
+    #score {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      font-size: 20px;
+      color: #0f0;
+    }
+  </style>
+</head>
+<body>
+  <div id="score">分數：0</div>
+  <canvas id="gameCanvas" width="400" height="600"></canvas>
+  <script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+
+    const carWidth = 40;
+    const carHeight = 60;
+    const roadWidth = 300;
+    const roadLeft = (canvas.width - roadWidth) / 2;
+    const roadRight = roadLeft + roadWidth;
+
+    let player = {
+      x: canvas.width / 2 - carWidth / 2,
+      y: canvas.height - carHeight - 10,
+      width: carWidth,
+      height: carHeight,
+      speed: 5
+    };
+
+    let obstacles = [];
+    let score = 0;
+    let gameOver = false;
+    let obstacleSpeed = 3;
+
+    function drawCar(x, y, color) {
+      ctx.fillStyle = color;
+      ctx.fillRect(x, y, carWidth, carHeight);
+    }
+
+    function drawObstacle(obs) {
+      ctx.fillStyle = "red";
+      ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
+    }
+
+    function createObstacle() {
+      const x = roadLeft + Math.random() * (roadWidth - carWidth);
+      obstacles.push({
+        x: x,
+        y: -carHeight,
+        width: carWidth,
+        height: carHeight
+      });
+    }
+
+    function update() {
+      if (gameOver) return;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // 畫道路
+      ctx.fillStyle = "#444";
+      ctx.fillRect(roadLeft, 0, roadWidth, canvas.height);
+
+      // 玩家
+      drawCar(player.x, player.y, "#0f0");
+
+      // 障礙物
+      for (let i = 0; i < obstacles.length; i++) {
+        let obs = obstacles[i];
+        obs.y += obstacleSpeed;
+        drawObstacle(obs);
+
+        // 碰撞檢查
+        if (
+          player.x < obs.x + obs.width &&
+          player.x + player.width > obs.x &&
+          player.y < obs.y + obs.height &&
+          player.y + player.height > obs.y
+        ) {
+          gameOver = true;
+          alert("咕嚕唧！你撞車了！");
+          location.reload();
+        }
+
+        // 超出畫面則刪除
+        if (obs.y > canvas.height) {
+          obstacles.splice(i, 1);
+          i--;
+          score++;
+          document.getElementById("score").innerText = "分數：" + score;
+
+          if (score % 5 === 0) {
+            obstacleSpeed += 0.5;
+          }
+        }
+      }
+
+      requestAnimationFrame(update);
+    }
+
+    setInterval(createObstacle, 1200);
+
+    // 控制左右移動
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowLeft" && player.x > roadLeft) {
+        player.x -= player.speed * 2;
+      } else if (e.key === "ArrowRight" && player.x + carWidth < roadRight) {
+        player.x += player.speed * 2;
+      }
+    });
+
+    update();
+  </script>
+</body>
+</html>
